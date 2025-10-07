@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>GitHub Account Creation Date</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:2rem;display:grid;gap:1rem}
+form{display:flex;gap:.5rem}
+input,button{font-size:1rem;padding:.5rem .75rem}
+#result{min-height:1.5em;color:#333}
+</style>
+</head>
+<body>
+<h1>GitHub Account Creation Date</h1>
+<form id="form">
+  <input id="username" type="text" placeholder="Enter GitHub username" required>
+  <button type="submit">Lookup</button>
+</form>
+<div id="result">Try: torvalds</div>
+<script>
+const form = document.getElementById('form');
+const input = document.getElementById('username');
+const result = document.getElementById('result');
+
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const u = input.value.trim();
+  if (!u) return result.textContent = 'Please enter a username.';
+  result.textContent = 'Loading...';
+  try {
+    const res = await fetch('https://api.github.com/users/' + encodeURIComponent(u), {
+      headers: { 'Accept': 'application/vnd.github+json' }
+    });
+    if (!res.ok) {
+      throw new Error(res.status === 404 ? 'User not found.' : 'Request failed (' + res.status + ').');
+    }
+    const data = await res.json();
+    if (!data.created_at) throw new Error('No creation date available.');
+    const d = new Date(data.created_at);
+    const formatted = d.toLocaleString(undefined, {
+      year: 'numeric', month: 'long', day: 'numeric',
+      hour: '2-digit', minute: '2-digit', timeZoneName: 'short'
+    });
+    result.textContent = 'Account created: ' + formatted;
+  } catch (err) {
+    result.textContent = 'Error: ' + err.message;
+  }
+});
+</script>
+</body>
+</html>
